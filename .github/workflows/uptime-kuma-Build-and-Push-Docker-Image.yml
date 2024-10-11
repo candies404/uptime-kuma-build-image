@@ -86,10 +86,20 @@ jobs:
           IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/uptime-kuma
         run: |
           cd uptime-kuma
-          echo 'Building Docker image...'
-          docker build -t $IMAGE_NAME:latest .
-          echo 'Pushing Docker image to Docker Hub...'
+          # 获取最新提交的SHA值和日期
+          COMMIT_SHA=$(git rev-parse --short HEAD)
+          COMMIT_DATE=$(git log -1 --format=%cs)
+          TAG="${COMMIT_DATE}-${COMMIT_SHA}"
+          
+          echo "构建Docker镜像..."
+          docker build -t $IMAGE_NAME:$TAG -t $IMAGE_NAME:latest .
+          
+          echo "推送Docker镜像到Docker Hub..."
+          docker push $IMAGE_NAME:$TAG
           docker push $IMAGE_NAME:latest
+          
+          # 将TAG保存到环境变量中,以便后续步骤使用
+          echo "IMAGE_TAG=$TAG" >> $GITHUB_ENV
 
       - name: 获取当前时间
         id: get_time
